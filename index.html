@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rakta-Vahini - Blood Donor Network</title>
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            --primary: #D32F2F;
+            --primary-dark: #9A0007;
+            --light-red: #ffebee;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #1D1B20;
+            --text-muted: #666666;
+            --success: #2E7D32;
+            --border: #eeeeee;
+            --nav-bg: #ffffff;
+            --skeleton-1: #f0f0f0;
+            --skeleton-2: #e0e0e0;
+        }
+
+        body.dark-theme {
+            --primary: #EF5350;
+            --primary-dark: #D32F2F;
+            --light-red: #3b1c1c;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-muted: #aaaaaa;
+            --success: #81C784;
+            --border: #333333;
+            --nav-bg: #1e1e1e;
+            --skeleton-1: #2c2c2c;
+            --skeleton-2: #3c3c3c;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #000; display: flex; justify-content: center; height: 100vh; overflow: hidden;
+            color: var(--text-main);
+        }
+
+        /* --- APP CONTAINER & LAYOUT --- */
+        #app-container {
+            width: 100%; max-width: 420px; height: 100vh; background-color: var(--bg-color);
+            display: flex; flex-direction: column; position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary); color: white; padding: 18px 16px;
+            font-size: 20px; font-weight: 800; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 10; display: flex; justify-content: space-between; align-items: center;
+            transition: background 0.3s;
+        }
+
+        .header-icon { font-size: 24px; cursor: pointer; padding: 4px; }
+
+        main { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 90px; scroll-behavior: smooth; }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: absolute; bottom: 0; width: 100%; background-color: var(--nav-bg);
+            display: flex; justify-content: space-between; border-top: 1px solid var(--border);
+            z-index: 60; padding: 8px 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+            transition: background 0.3s, border 0.3s;
+        }
+        .nav-item {
+            flex: 1; text-align: center; cursor: pointer; color: var(--text-muted);
+            font-size: 11px; font-weight: 700; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .nav-icon { font-size: 22px; transition: transform 0.3s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active .nav-icon { transform: scale(1.2) translateY(-2px); }
+
+        /* --- CARDS & UI ELEMENTS --- */
+        .card {
+            background: var(--card-bg); border-radius: 16px; padding: 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border);
+            transition: background 0.3s, border 0.3s, transform 0.2s;
+        }
+        .clickable-card { cursor: pointer; }
+        .clickable-card:active { transform: scale(0.97); }
+
+        .blood-badge {
+            background-color: var(--light-red); color: var(--primary); font-weight: 900; font-size: 18px;
+            width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center;
+            align-items: center; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(211,47,47,0.1);
+        }
+
+        .btn {
+            background-color: var(--primary); color: white; border: none; padding: 14px 20px;
+            border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer;
+            width: 100%; transition: 0.2s; box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn:active { transform: scale(0.95); }
+        
+        .btn-outline {
+            background-color: transparent; color: var(--primary); border: 2px solid var(--primary);
+            padding: 12px 20px; border-radius: 12px; font-size: 16px; font-weight: 800;
+            cursor: pointer; width: 100%; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-outline:active { transform: scale(0.95); }
+
+        .btn.location-btn { background-color: #E3F2FD; color: #1976D2; box-shadow: none; margin-bottom: 12px; }
+        body.dark-theme .btn.location-btn { background-color: #0d47a1; color: white; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: bold; }
+        .form-control { 
+            width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px; 
+            font-size: 14px; background: var(--bg-color); color: var(--text-main); transition: 0.3s;
+        }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--light-red); }
+
+        .row { display: flex; gap: 12px; }
+        .col { flex: 1; }
+
+        .segment-control { display: flex; background: var(--border); border-radius: 10px; margin-bottom: 20px; padding: 4px; }
+        .segment-btn {
+            flex: 1; text-align: center; padding: 12px; cursor: pointer; color: var(--text-muted);
+            font-weight: bold; font-size: 14px; border-radius: 8px; transition: 0.3s;
+            display: flex; justify-content: center; gap: 8px; align-items: center;
+        }
+        .segment-btn.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        /* --- SKELETON LOADING --- */
+        .skeleton {
+            background: linear-gradient(90deg, var(--skeleton-1) 25%, var(--skeleton-2) 50%, var(--skeleton-1) 75%);
+            background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .sk-avatar { width: 50px; height: 50px; border-radius: 12px; }
+        .sk-text { height: 16px; margin-bottom: 8px; width: 100%; }
+        .sk-text.short { width: 60%; }
+
+        /* --- FULL SCREEN OVERLAYS (Detail, Settings, Certificate) --- */
+        .fullscreen-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-color);
+            z-index: 100; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; flex-direction: column;
+        }
+        .fullscreen-overlay.open { transform: translateX(0); }
+        .overlay-header {
+            background: var(--primary); color: white; padding: 18px 16px; display: flex; 
+            align-items: center; gap: 12px; font-weight: bold; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .back-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; padding: 0; }
+        .overlay-content { padding: 16px; overflow-y: auto; flex: 1; }
+
+        /* --- FLOATING ACTION BUTTON & BOTTOM SHEET --- */
+        .fab {
+            position: absolute; bottom: 80px; right: 20px; width: 60px; height: 60px; border-radius: 30px;
+            background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); color: white; font-size: 24px;
+            display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 20px rgba(255,8,68,0.4);
+            cursor: pointer; z-index: 50; transition: transform 0.2s; animation: pulseFab 2s infinite;
+        }
+        .fab:active { transform: scale(0.9); }
+        @keyframes pulseFab { 0% { box-shadow: 0 0 0 0 rgba(255,8,68,0.7); } 70% { box-shadow: 0 0 0 15px rgba(255,8,68,0); } 100% { box-shadow: 0 0 0 0 rgba(255,8,68,0); } }
+
+        .bottom-sheet-backdrop {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            z-index: 110; opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .bottom-sheet-backdrop.open { opacity: 1; pointer-events: all; }
+        .bottom-sheet {
+            position: absolute; bottom: -100%; left: 0; width: 100%; background: var(--card-bg);
+            border-radius: 24px 24px 0 0; padding: 24px; z-index: 120; transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+        }
+        .bottom-sheet.open { bottom: 0; }
+        .sheet-handle { width: 40px; height: 5px; background: var(--border); border-radius: 10px; margin: 0 auto 20px auto; }
+
+        /* --- SPLASH & ONBOARDING --- */
+        #splash-screen {
+            position: absolute; z-index: 200; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; transition: opacity 0.5s;
+        }
+        #onboarding-screen {
+            position: absolute; z-index: 190; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); padding: 24px; text-align: center; display: none; flex-direction: column;
+        }
+        .onboard-img { font-size: 80px; margin: 40px 0; }
+
+        /* --- CERTIFICATE UI --- */
+        .certificate {
+            border: 8px solid var(--primary); padding: 20px; text-align: center; background: #fff;
+            background-image: repeating-linear-gradient(45deg, #fafafa 25%, transparent 25%, transparent 75%, #fafafa 75%, #fafafa), repeating-linear-gradient(45deg, #fafafa 25%, #ffffff 25%, #ffffff 75%, #fafafa 75%, #fafafa);
+            background-size: 40px 40px; color: #333; margin-top: 20px; position: relative; border-radius: 12px;
+        }
+
+        /* --- UTILS --- */
+        .smart-badge { font-size: 10px; padding: 4px 8px; border-radius: 20px; font-weight: bold; background: #e3f2fd; color: #1565c0; margin-left: auto; }
+        body.dark-theme .smart-badge { background: #0d47a1; color: white; }
+        
+        #snackbar {
+            visibility: hidden; min-width: 250px; background-color: var(--text-main); color: var(--bg-color);
+            text-align: center; padding: 16px; position: absolute; z-index: 300; left: 50%; bottom: 80px;
+            transform: translateX(-50%); font-size: 14px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #snackbar.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.7s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 80px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 80px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div style="font-size: 80px; animation: pulseFab 1.5s infinite; border-radius:50%;">🩸</div>
+        <h1 style="margin-top: 20px;">Rakta-Vahini</h1>
+        <p>Intelligent Blood Network</p>
+    </div>
+
+    <!-- Onboarding Screen -->
+    <div id="onboarding-screen">
+        <h2 style="margin-top:40px; color:var(--primary);">Save Lives Digitally</h2>
+        <div class="onboard-img">🤝</div>
+        <p style="color:var(--text-muted); line-height:1.6; flex:1;">Welcome to the next-gen blood donation network. Experience smart matching, live tracking, and digital certificates.</p>
+        <button class="btn" style="margin-bottom:40px;" onclick="finishOnboarding()">Get Started</button>
+    </div>
+
+    <!-- Main App Header -->
+    <header>
+        <span>🩸 Rakta-Vahini</span>
+        <span class="header-icon" onclick="openSettings()">⚙️</span>
+    </header>
+    
+    <!-- Main Content -->
+    <main id="main-content"></main>
+
+    <!-- FAB: Emergency SOS -->
+    <div class="fab" onclick="openEmergencySheet()">🚨</div>
+
+    <!-- Bottom Navigation -->
+    <nav>
+        <div class="nav-item active" onclick="switchTab('search', this)"><span class="nav-icon">🔍</span><span>Search</span></div>
+        <div class="nav-item" onclick="switchTab('profile', this)"><span class="nav-icon">👤</span><span>Profile</span></div>
+        <div class="nav-item" onclick="switchTab('hospitals', this)"><span class="nav-icon">🏥</span><span>Hospitals</span></div>
+        <div class="nav-item" onclick="switchTab('users', this)"><span class="nav-icon">👥</span><span>Users</span></div>
+        <div class="nav-item" onclick="switchTab('history', this)"><span class="nav-icon">🕒</span><span>History</span></div>
+    </nav>
+
+    <!-- Universal Fullscreen Overlay -->
+    <div id="universal-overlay" class="fullscreen-overlay">
+        <div class="overlay-header">
+            <button class="back-btn" onclick="closeOverlay()">⬅</button>
+            <span id="overlay-title">Details</span>
+        </div>
+        <div id="overlay-content" class="overlay-content"></div>
+    </div>
+
+    <!-- Bottom Sheet for SOS -->
+    <div class="bottom-sheet-backdrop" id="bs-backdrop" onclick="closeEmergencySheet()"></div>
+    <div class="bottom-sheet" id="bs-content">
+        <div class="sheet-handle"></div>
+        <h2 style="margin-top:0; color:var(--primary);">Emergency Broadcast</h2>
+        <p style="font-size:13px; color:var(--text-muted);">This will send an SOS push notification to eligible donors and verified hospitals in your radius.</p>
+        
+        <div class="form-group">
+            <label>Needed Blood Group</label>
+            <select id="sosGroup" class="form-control">
+                <option>O+</option><option>O-</option><option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option><option>AB+</option><option>AB-</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Units Required</label>
+            <input type="number" id="sosUnits" class="form-control" value="1">
+        </div>
+        
+        <button class="btn" style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);" onclick="triggerSOS()">🚨 Broadcast SOS Now</button>
+    </div>
+
+    <div id="snackbar">Success Message</div>
+</div>
+
+<script>
+    // --- APP CORE SETUP & HAPTICS ---
+    const haptic = () => { if(navigator.vibrate) navigator.vibrate(40); };
+
+    // Initialization (Splash, Theme, Onboarding)
+    window.onload = () => {
+        if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-theme');
+        setTimeout(() => {
+            document.getElementById('splash-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.display = 'none';
+                if(!localStorage.getItem('onboarded')) {
+                    document.getElementById('onboarding-screen').style.display = 'flex';
+                } else {
+                    renderSearch();
+                }
+            }, 500);
+        }, 2000);
+    };
+
+    function finishOnboarding() {
+        haptic();
+        localStorage.setItem('onboarded', 'true');
+        document.getElementById('onboarding-screen').style.display = 'none';
+        renderSearch();
+    }
+
+    // --- MOCK DATABASE (Upgraded for Smart Matching) ---
+    const now = new Date();
+    const date100DaysAgo = new Date(now.getTime() - (100 * 24 * 60 * 60 * 1000));
+    const date40DaysAgo = new Date(now.getTime() - (40 * 24 * 60 * 60 * 1000));
+    const formatFullDate = (date) => new Intl.DateTimeFormat('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(date);
+
+    let myHistory =[date100DaysAgo];
+    let myLiveLocation = null;
+
+    let enrolledUsers =[
+        { name: "Rahul Sharma", age: 28, gender: "Male", group: "O+", phone: "9876543210", altPhone: "9876543201", address: "Sector 4", distance: 5, lat: 28.6139, lng: 77.2090, lastDonation: date100DaysAgo, responseSpeed: 5, freq: 8, activeDaysAgo: 1 },
+        { name: "Priya Singh", age: 24, gender: "Female", group: "A+", phone: "9876543211", altPhone: "9876543202", address: "Green Valley", distance: 12, lat: 28.5677, lng: 77.2201, lastDonation: date40DaysAgo, responseSpeed: 15, freq: 3, activeDaysAgo: 5 },
+        { name: "Amit Kumar", age: 35, gender: "Male", group: "O+", phone: "9876543212", altPhone: "N/A", address: "Highway Rd", distance: 18, lat: 28.6883, lng: 77.2069, lastDonation: new Date(now.getTime() - 150*24*60*60*1000), responseSpeed: 2, freq: 12, activeDaysAgo: 0 },
+        { name: "Neha Gupta", age: 29, gender: "Female", group: "O+", phone: "9876543213", altPhone: "N/A", address: "West End", distance: 3, lat: 28.6200, lng: 77.2100, lastDonation: new Date(now.getTime() - 110*24*60*60*1000), responseSpeed: 30, freq: 1, activeDaysAgo: 10 }
+    ];
+
+    let enrolledHospitals =[
+        { name: "City Care Hospital", address: "123 Main St, Medical District", lat: 12.9716, lng: 77.5946, email: "emergency@citycare.com", phone: "9988776655", landline: "011-2345678" },
+        { name: "Apollo Lifeline", address: "45 West Avenue, Suburbia", lat: 13.0827, lng: 80.2707, email: "bloodbank@apollo.com", phone: "9988776644", landline: "011-8765432" }
+    ];
+
+    let currentProfileView = 'user'; 
+    let currentHistoryView = 'user';
+
+    // --- ALGORITHMS & GPS ---
+    function fetchLiveLocation(callback = null) {
+        haptic(); showToast("📍 Accessing GPS...");
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    myLiveLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    enrolledUsers.forEach(u => { u.lat = myLiveLocation.lat + (Math.random() - 0.5)*0.2; u.lng = myLiveLocation.lng + (Math.random() - 0.5)*0.2; });
+                    showToast("✅ Live Location Captured!");
+                    if(callback) callback(); else filterDonors();
+                },
+                (err) => { showToast("❌ GPS Denied. Using fallback."); if(callback) callback(); else filterDonors(); }
+            );
+        } else { showToast("Geolocation not supported."); }
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        if(!lat1 || !lon1 || !lat2 || !lon2) return 0;
+        const R = 6371; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+        return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
+    }
+
+    // --- RENDER MAIN SCREENS ---
+    
+    function renderSearch() {
+        const content = document.getElementById('main-content');
+        content.innerHTML = `
+            <h2 style="margin-top:0;">Find Eligible Donors</h2>
+            <button class="btn location-btn" onclick="fetchLiveLocation()">📍 Fetch My Live Location</button>
+
+            <div class="card">
+                <div class="form-group">
+                    <label>Required Blood Group</label>
+                    <select id="bgSelect" class="form-control" onchange="filterDonors()">
+                        <option>O+</option>
+                        <option>O-</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top:16px;">
+                    <label>Search Radius: <span id="rValue" style="color:var(--primary); font-size:16px;">20</span> km</label>
+                    <input type="range" id="rSlider" min="1" max="100" value="20" class="form-control" style="padding:0; border:none;" oninput="updateRadius(this.value)">
+                </div>
+            </div>
+            <h3 style="color:var(--text-muted); font-size:14px; text-transform:uppercase;">Intelligent Results</h3>
+            <div id="dList"></div>
+        `;
+        filterDonors();
+    }
+
+    function updateRadius(val) { document.getElementById('rValue').innerText = val; filterDonors(); }
+
+    function renderSkeleton(container) {
+        container.innerHTML = `
+            <div class="card" style="display:flex; gap:12px;"><div class="skeleton sk-avatar"></div><div style="flex:1"><div class="skeleton sk-text"></div><div class="skeleton sk-text short"></div></div></div>
+            <div class="card" style="display:flex; gap:12px;"><div class="skeleton sk-avatar"></div><div style="flex:1"><div class="skeleton sk-text"></div><div class="skeleton sk-text short"></div></div></div>
+        `;
+    }
+
+    function filterDonors() {
+        haptic();
+        const group = document.getElementById('bgSelect').value;
+        const radius = parseInt(document.getElementById('rSlider').value);
+        const listDiv = document.getElementById('dList');
+        
+        renderSkeleton(listDiv);
+
+        setTimeout(() => {
+            let matches =[];
+            enrolledUsers.forEach((donor, idx) => {
+                const daysSince = Math.floor((new Date() - donor.lastDonation) / (1000 * 60 * 60 * 24));
+                donor.isEligible = daysSince > 90;
+                donor.calcDist = myLiveLocation ? parseFloat(calculateDistance(myLiveLocation.lat, myLiveLocation.lng, donor.lat, donor.lng)) : donor.distance;
+                
+                if (donor.group === group && donor.calcDist <= radius && donor.isEligible) {
+                    donor.smartScore = donor.calcDist + (donor.responseSpeed * 0.1) + (donor.activeDaysAgo * 0.5) - (donor.freq * 0.2);
+                    donor.originalIndex = idx;
+                    matches.push(donor);
+                }
+            });
+
+            matches.sort((a, b) => a.smartScore - b.smartScore);
+
+            listDiv.innerHTML = "";
+            if (matches.length === 0) {
+                listDiv.innerHTML = `<div class="card" style="text-align:center; color: var(--text-muted);">No eligible donors found within ${radius}km.</div>`;
+                return;
+            }
+
+            matches.forEach((donor, i) => {
+                let rankBadge = i === 0 ? `<span class="smart-badge">🌟 Best Match</span>` : '';
+                listDiv.innerHTML += `
+                    <div class="card clickable-card" onclick="openUserDetail(${donor.originalIndex})" style="display: flex; gap:12px; align-items: center; position:relative;">
+                        <div class="blood-badge">${donor.group}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight: bold; font-size: 16px; display:flex; align-items:center;">${donor.name} ${rankBadge}</div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-top:4px;">📍 ${donor.calcDist} km away (Live)</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }, 400);
+    }
+
+    // --- OVERLAYS (Detail Views, Settings, Certificate) ---
+    function openOverlay(title, htmlContent) {
+        haptic();
+        document.getElementById('overlay-title').innerText = title;
+        document.getElementById('overlay-content').innerHTML = htmlContent;
+        document.getElementById('universal-overlay').classList.add('open');
+    }
+    function closeOverlay() { haptic(); document.getElementById('universal-overlay').classList.remove('open'); }
+
+    function openUserDetail(index) {
+        const u = enrolledUsers[index];
+        const daysSince = Math.floor((new Date() - u.lastDonation) / (1000 * 60 * 60 * 24));
+        const status = daysSince > 90 ? `<div style="background:#E8F5E9; padding:12px; border-radius:8px; color:var(--success); font-weight:bold; text-align:center; margin-bottom:16px;">✅ Eligible</div>` : `<div style="background:var(--light-red); padding:12px; border-radius:8px; color:var(--primary); font-weight:bold; text-align:center; margin-bottom:16px;">🚫 Not Eligible</div>`;
+
+        openOverlay("Donor Profile", `
+            <div style="text-align:center; margin-bottom:20px;">
+                <div class="blood-badge" style="width:80px; height:80px; font-size:32px; margin: 0 auto 10px auto;">${u.group}</div>
+                <h2 style="margin:0;">${u.name}</h2>
+                <p style="color:var(--text-muted); margin:4px 0; font-weight:bold;">Age: ${u.age} • Gender: ${u.gender}</p>
+                <div class="smart-badge" style="display:inline-block; margin-top:8px;">★ ${u.freq} Lifetime Donations</div>
+            </div>
+            ${status}
+            <div class="card" style="box-shadow:none; border:1px solid var(--border);">
+                <p><strong>📍 Address:</strong> ${u.address}</p>
+                <p><strong>🕒 Last Donated:</strong> ${formatFullDate(u.lastDonation)}</p>
+                <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+                <p><strong>📱 Primary Mobile:</strong> +91 ${u.phone}</p>
+                <p><strong>📞 Alternate Mobile:</strong> +91 ${u.altPhone}</p>
+            </div>
+            <button class="btn" onclick="window.location.href='tel:${u.phone}'">📞 Secure Call</button>
+        `);
+    }
+
+    function openHospitalDetail(index) {
+        const h = enrolledHospitals[index];
+        const coordsStr = (h.lat && h.lng) ? `${h.lat} N, ${h.lng} E` : "Not Available";
+        
+        openOverlay("Hospital Info", `
+            <h2 style="margin-top:0; color:var(--text-main);">${h.name}</h2>
+            <div class="card" style="box-shadow:none; border:1px solid var(--border); padding: 20px; line-height:1.6;">
+                <p style="margin: 0 0 12px 0;">📍 <strong>Address:</strong> ${h.address}</p>
+                <p style="margin: 0 0 12px 0;">🌍 <strong>Map Coordinates:</strong> ${coordsStr}</p>
+                <p style="margin: 0 0 12px 0;">✉️ <strong>Email:</strong> ${h.email}</p>
+                <p style="margin: 0 0 12px 0;">📱 <strong>Mobile:</strong> ${h.phone}</p>
+                <p style="margin: 0;">☎️ <strong>Landline:</strong> ${h.landline}</p>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:20px;">
+                <button class="btn" style="flex:1;" onclick="window.location.href='tel:${h.phone}'">📞 Mobile</button>
+                <button class="btn-outline" style="flex:1;" onclick="window.location.href='tel:${h.landline}'">☎️ Landline</button>
+            </div>
+        `);
+    }
+
+    // --- EMERGENCY SOS ---
+    function openEmergencySheet() { haptic(); document.getElementById('bs-backdrop').classList.add('open'); document.getElementById('bs-content').classList.add('open'); }
+    function closeEmergencySheet() { haptic(); document.getElementById('bs-backdrop').classList.remove('open'); document.getElementById('bs-content').classList.remove('open'); }
+
+    function triggerSOS() {
+        haptic();
+        const type = document.getElementById('sosGroup').value;
+        const units = document.getElementById('sosUnits').value;
+        closeEmergencySheet();
+        showToast(`🚨 SOS Broadcasted! Pushing to nearby ${type} donors and hospitals...`);
+        setTimeout(() => alert(`SYSTEM NOTIFICATION:\nURGENT: ${units} units of ${type} blood needed near your location. Respond immediately via Rakta-Vahini app.`), 1000);
+    }
+
+    // --- PRODUCTION PAGES (Settings) ---
+    function openSettings() {
+        const isDark = document.body.classList.contains('dark-theme');
+        openOverlay("App Settings", `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:bold;">🌙 Dark Mode</span>
+                <input type="checkbox" ${isDark ? 'checked' : ''} onchange="toggleTheme(this.checked)" style="transform:scale(1.5);">
+            </div>
+            <div class="card clickable-card" onclick="showStatic('about')">ℹ️ About Us</div>
+            <div class="card clickable-card" onclick="showStatic('faq')">❓ FAQ</div>
+            <div class="card clickable-card" onclick="showStatic('privacy')">🔒 Terms & Privacy</div>
+            <div class="card clickable-card" onclick="showStatic('support')">🎧 Contact Support</div>
+            <div class="card clickable-card" style="color:var(--primary);" onclick="showStatic('report')">⚠️ Report Issue</div>
+        `);
+    }
+
+    function toggleTheme(isDark) {
+        haptic();
+        if(isDark) { document.body.classList.add('dark-theme'); localStorage.setItem('theme', 'dark'); } 
+        else { document.body.classList.remove('dark-theme'); localStorage.setItem('theme', 'light'); }
+    }
+
+    function showStatic(page) {
+        let content = "";
+        if(page === 'about') content = `<h3>About Rakta-Vahini</h3><p>Built to eliminate noise in blood emergencies using GenAI and smart location matching. We save lives.</p>`;
+        if(page === 'faq') content = `<h3>FAQ</h3><b>Q: How is eligibility calculated?</b><br>A: A strict 90-day cooling period is enforced automatically.<br><br><b>Q: Is my number public?</b><br>A: No, calls are routed via Intents.`;
+        if(page === 'privacy') content = `<h3>Privacy Policy</h3><p>We do not sell data. Location is used solely for haversine emergency matching.</p>`;
+        if(page === 'support' || page === 'report') content = `<h3>Support Ticket</h3><textarea class="form-control" rows="4" placeholder="Describe your issue..."></textarea><button class="btn" style="margin-top:12px;" onclick="closeOverlay(); showToast('Ticket Submitted.')">Submit</button>`;
+        openOverlay(page.toUpperCase(), content);
+    }
+
+    // --- LOG DONATION & CERTIFICATE ---
+    function logDonation() {
+        myHistory.unshift(new Date());
+        openOverlay("Appreciation", `
+            <h2 style="text-align:center; color:var(--success);">Donation Logged!</h2>
+            <div class="certificate" id="certNode">
+                <h1 style="color:var(--primary); margin:10px 0;">Certificate of Heroism</h1>
+                <p style="font-size:12px; color:#555;">Presented by Rakta-Vahini Network</p>
+                <div style="font-size:50px; margin:20px 0;">🏅</div>
+                <h3 style="margin:5px 0;">Life Saver</h3>
+                <p>Awarded for donating blood on</p>
+                <strong>${formatFullDate(new Date())}</strong>
+                <p style="font-size:10px; margin-top:30px;">ID: RV-${Date.now()}</p>
+            </div>
+            <button class="btn" style="margin-top:20px;" onclick="window.print()">📥 Save PDF Certificate</button>
+            <p style="text-align:center; font-size:12px; margin-top:10px; color:var(--text-muted);">Eligibility timer reset to 90 days.</p>
+        `);
+    }
+
+    // --- PROFILE, HOSPITALS, USERS & HISTORY ---
+    function renderProfile() {
+        const c = document.getElementById('main-content');
+        c.innerHTML = `
+            <h2 style="margin-top:0;">Registration Profile</h2>
+            <div class="segment-control">
+                <div class="segment-btn ${currentProfileView === 'user' ? 'active' : ''}" onclick="currentProfileView='user'; renderProfile(); haptic();">👤 Individual</div>
+                <div class="segment-btn ${currentProfileView === 'hospital' ? 'active' : ''}" onclick="currentProfileView='hospital'; renderProfile(); haptic();">🏥 Hospital</div>
+            </div>
+            ${currentProfileView === 'user' ? `
+                <button class="btn location-btn" onclick="fetchLiveLocation()">📍 Map My Current Location for Form</button>
+                <div class="card">
+                    <h3 style="margin-top:0; color:var(--primary);">Personal Details</h3>
+                    <div class="form-group"><label>Full Name</label><input type="text" id="u_name" class="form-control" placeholder="Enter full name"></div>
+                    <div class="row">
+                        <div class="col form-group">
+                            <label>Age</label>
+                            <input type="number" id="u_age" class="form-control" placeholder="Age">
+                        </div>
+                        <div class="col form-group">
+                            <label>Gender</label>
+                            <select id="u_gender" class="form-control">
+                                <option>Male</option>
+                                <option>Female</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col form-group">
+                            <label>Blood Group</label>
+                            <select id="u_bg" class="form-control">
+                                <option>O+</option><option>O-</option>
+                                <option>A+</option><option>A-</option>
+                                <option>B+</option><option>B-</option>
+                                <option>AB+</option><option>AB-</option>
+                            </select>
+                        </div>
+                        <div class="col form-group">
+                            <label>Primary Phone</label>
+                            <input type="tel" id="u_phone" class="form-control" placeholder="Mobile No.">
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Alt. Phone Number</label><input type="tel" id="u_alt" class="form-control" placeholder="Optional"></div>
+                    <div class="form-group"><label>Address</label><input type="text" id="u_addr" class="form-control" placeholder="City, Area"></div>
+                    <button class="btn" onclick="saveUser()">Save User Profile</button>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0;">Log Donation</h3>
+                    <p style="font-size:12px; color:var(--text-muted);">Update timer to pause requests.</p>
+                    <button class="btn" style="background:#444;" onclick="logDonation()">I Donated Today</button>
+                </div>
+            ` : `
+                <div class="card">
+                    <h3 style="margin-top:0; color:var(--primary);">Hospital/Bank Details</h3>
+                    <div class="form-group"><label>Hospital Name</label><input type="text" id="h_name" class="form-control" placeholder="Official Name"></div>
+                    <div class="form-group"><label>Address</label><input type="text" id="h_addr" class="form-control" placeholder="Full Street Address"></div>
+                    <div class="form-group"><label>Google Maps Link / GPS</label><input type="text" id="h_loc" class="form-control" placeholder="Coordinates or Link"></div>
+                    <div class="row">
+                        <div class="col form-group"><label>Emergency Mobile</label><input type="tel" id="h_phone" class="form-control" placeholder="Mobile No."></div>
+                        <div class="col form-group"><label>Landline</label><input type="tel" id="h_land" class="form-control" placeholder="With STD code"></div>
+                    </div>
+                    <div class="form-group"><label>Official Email ID</label><input type="email" id="h_email" class="form-control" placeholder="contact@hospital.com"></div>
+                    <button class="btn" onclick="saveHospital()">Register Hospital</button>
+                </div>
+            `}
+        `;
+    }
+
+    function saveUser() { haptic(); enrolledUsers.unshift({ name: document.getElementById('u_name').value||"New", age: document.getElementById('u_age').value, gender: document.getElementById('u_gender').value, group: document.getElementById('u_bg').value, phone: document.getElementById('u_phone').value, altPhone: document.getElementById('u_alt').value, address: document.getElementById('u_addr').value, distance: 5, lat: 28.6, lng: 77.2, lastDonation: date100DaysAgo, responseSpeed: 10, freq: 0, activeDaysAgo: 0 }); showToast("✅ Registered!"); }
+    function saveHospital() { haptic(); enrolledHospitals.unshift({ name: document.getElementById('h_name').value||"New Hosp", address: document.getElementById('h_addr').value, phone: document.getElementById('h_phone').value, landline: document.getElementById('h_land').value }); showToast("✅ Registered!"); }
+
+    function renderHospitals() {
+        const c = document.getElementById('main-content');
+        let htm = `<h2 style="margin-top:0;">Verified Hospitals</h2>`;
+        enrolledHospitals.forEach((h, i) => {
+            htm += `<div class="card clickable-card" onclick="openHospitalDetail(${i})">
+                <div style="font-weight:900; font-size:16px;">${h.name}</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">📍 ${h.address}</div>
+            </div>`;
+        });
+        c.innerHTML = htm;
+    }
+
+    function renderUsers() {
+        const c = document.getElementById('main-content');
+        let htm = `<h2 style="margin-top:0;">Registered Donors</h2>`;
+        enrolledUsers.forEach((u, i) => {
+            const el = ((new Date() - u.lastDonation) / 86400000) > 90;
+            htm += `<div class="card clickable-card" onclick="openUserDetail(${i})" style="display:flex; gap:16px; align-items:center;">
+                <div class="blood-badge">${u.group}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:bold; font-size:16px;">${u.name}</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin:4px 0;">Age: ${u.age} • ${u.gender}</div>
+                    <div style="font-size:12px; font-weight:bold; color:${el?'var(--success)':'var(--primary)'}">${el?'✅ Eligible':'🚫 Cooling Period'}</div>
+                </div>
+            </div>`;
+        });
+        c.innerHTML = htm;
+    }
+
+    function renderHistory() {
+        const c = document.getElementById('main-content');
+        let htm = `
+            <h2 style="margin-top:0;">Donation Logs</h2>
+            <div class="segment-control">
+                <div class="segment-btn ${currentHistoryView === 'user' ? 'active' : ''}" onclick="currentHistoryView='user'; renderHistory(); haptic();">👤 Users Log</div>
+                <div class="segment-btn ${currentHistoryView === 'hospital' ? 'active' : ''}" onclick="currentHistoryView='hospital'; renderHistory(); haptic();">🏥 Hospital Log</div>
+            </div>
+        `;
+        if (currentHistoryView === 'user') {
+            myHistory.forEach(d => {
+                htm += `<div class="card" style="display:flex; align-items:center; border-left:4px solid var(--success);">
+                    <div class="blood-badge" style="margin-right:16px;">🩸</div>
+                    <div><div style="font-weight:bold;">You (Personal)</div><div style="font-size:12px; margin-top:4px;">${formatFullDate(d)}</div></div>
+                </div>`;
+            });
+            enrolledUsers.forEach(u => {
+                htm += `<div class="card" style="display:flex; align-items:center;">
+                    <div class="blood-badge" style="margin-right:16px;">${u.group}</div>
+                    <div><div style="font-weight:bold;">${u.name}</div><div style="font-size:12px; margin-top:4px;">Donated: ${formatFullDate(u.lastDonation)}</div></div>
+                </div>`;
+            });
+        } else {
+            enrolledUsers.forEach((u, i) => {
+                let hosp = enrolledHospitals[i % enrolledHospitals.length].name;
+                htm += `<div class="card" style="display:flex; align-items:center;">
+                    <div class="blood-badge" style="margin-right:16px;">${u.group}</div>
+                    <div><div style="font-weight:bold;">${u.name}</div><div style="color:var(--success); font-size:12px; font-weight:bold; margin-top:4px;">🏥 To: ${hosp}</div></div>
+                </div>`;
+            });
+        }
+        c.innerHTML = htm;
+    }
+
+    function switchTab(t, el) {
+        haptic();
+        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+        el.classList.add('active'); closeOverlay();
+        if(t==='search') renderSearch(); if(t==='profile') renderProfile();
+        if(t==='hospitals') renderHospitals(); if(t==='users') renderUsers();
+        if(t==='history') renderHistory();
+    }
+
+    function showToast(m) {
+        const sb = document.getElementById("snackbar"); sb.innerText = m; sb.className = "show";
+        setTimeout(() => { sb.className = sb.className.replace("show", ""); }, 3000);
+    }
+</script>
+</body>
+</html>
